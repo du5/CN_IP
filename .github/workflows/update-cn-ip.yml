@@ -1,0 +1,44 @@
+name: Update CN.txt
+
+on:
+  schedule:
+    # 每 8 小时一次（UTC 00:00、08:00、16:00）
+    - cron: "0 */8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 同一时间只跑一个，后来的排队等待而不是取消正在跑的
+concurrency:
+  group: update-cn-ip
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Generate CN.txt
+        run: go run .
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet -- CN.txt; then
+            echo "CN.txt 无变化，跳过提交"
+            exit 0
+          fi
+          read -r added removed _ < <(git diff --numstat -- CN.txt)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CN.txt
+          git commit -m "更新 CN.txt，新增 ${added} 行，移除 ${removed} 行"
+          git push

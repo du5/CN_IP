@@ -26,6 +26,8 @@ https://raw.githubusercontent.com/du5/CN_IP/main/CN.txt
 
 没有注释和空行，可以直接喂给 ipset、nftables、路由器规则或任何接受 CIDR 列表的工具。
 
+列表由 GitHub Actions 每 8 小时根据最新数据库自动重新生成，有变化时自动提交。
+
 ### 防火墙脚本 `cn-firewall.sh`
 
 适用于 Debian / Ubuntu，需要 root。脚本会自动安装依赖、导入列表、配置开机恢复，并写入每小时自动更新的定时任务。
@@ -99,7 +101,7 @@ netfilter-persistent save
 go run .
 ```
 
-程序会下载 `GeoLite2-Country.mmdb`，遍历其中的所有网段，把国家码为 `CN` 的网段合并后写入 `CN.txt`，整个过程大约一秒。数据库文件会保留在本地，超过 6 小时未更新时自动重新下载；删除该文件也可以强制刷新。
+程序每次运行都会重新下载最新的 `GeoLite2-Country.mmdb` 到内存，遍历其中的所有网段，把国家码为 `CN` 的网段合并后写入 `CN.txt`，整个过程大约两秒，本地不缓存数据库。
 
 国家判定优先使用 `country.iso_code`，为空时回退到 `registered_country.iso_code`。
 
@@ -134,6 +136,8 @@ Sample:
 ```
 
 No comments or blank lines, so it can be fed directly to ipset, nftables, router rules, or anything else that accepts a CIDR list.
+
+A GitHub Actions workflow regenerates the list from the latest database every 8 hours and commits it when it changes.
 
 ### Firewall script `cn-firewall.sh`
 
@@ -208,7 +212,7 @@ Requires Go 1.26 or later.
 go run .
 ```
 
-The program downloads `GeoLite2-Country.mmdb`, walks every network in it, merges the ones whose country code is `CN`, and writes the result to `CN.txt`. The whole run takes about a second. The database file is kept locally and re-downloaded automatically when it is more than 6 hours old; deleting the file also forces a refresh.
+Every run downloads the latest `GeoLite2-Country.mmdb` into memory, walks every network in it, merges the ones whose country code is `CN`, and writes the result to `CN.txt`. The whole run takes about two seconds. The database is not cached locally.
 
 Country lookup prefers `country.iso_code` and falls back to `registered_country.iso_code` when it is empty.
 
